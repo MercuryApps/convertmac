@@ -4,3 +4,5 @@ build/
 .swiftpm/
 *.xcodeproj/
 xcuserdata/
+.ffmpeg-build/
+dist/

@@ -8,8 +8,9 @@ EXE="VideoAudioConverter"
 swift build -c release
 BIN="$(swift build -c release --show-bin-path)/$EXE"
 
-APP="build/$APP_NAME.app"
-rm -rf "$APP"
+WORKDIR="$(mktemp -d)"
+trap 'rm -rf "$WORKDIR"' EXIT
+APP="$WORKDIR/$APP_NAME.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/$EXE"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
@@ -29,10 +30,14 @@ cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 xattr -cr "$APP"
 codesign --force --sign - "$APP"
-echo "Built $APP"
+
+mkdir -p build
+rm -rf "build/$APP_NAME.app"
+ditto "$APP" "build/$APP_NAME.app"
+echo "Built build/$APP_NAME.app"
 
 if [ "${1:-}" = "--install" ]; then
   rm -rf "/Applications/$APP_NAME.app"
-  cp -R "$APP" /Applications/
+  ditto "$APP" "/Applications/$APP_NAME.app"
   echo "Installed to /Applications/$APP_NAME.app"
 fi

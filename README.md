@@ -69,15 +69,19 @@ If it saves you time, the best thanks is to star the repo, tell a friend, or fil
 
 ## Install
 
-### Requirements
-- macOS 14 (Sonoma) or later
-- [FFmpeg](https://ffmpeg.org), free and installed once:
+Requires a Mac with Apple Silicon (M1 or later) running macOS 14 Sonoma or newer. Everything is included, so you don't need to install anything else.
+
+### Download
+
+Get the latest **[Video-Audio-Converter.dmg](https://github.com/ashrinkm/video-audio-converter/releases/latest)**, open it, and drag the app into Applications.
+
+### Homebrew
 
 ```bash
-brew install ffmpeg
+brew install --cask ashrinkm/tap/video-audio-converter
 ```
 
-If FFmpeg isn't installed, the app will offer to set it up for you.
+> **First launch:** releases aren't notarized by Apple yet, so macOS will say it can't verify the app. Open it once, then go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway**. You only have to do this once.
 
 ### Build from source
 
@@ -87,13 +91,11 @@ cd video-audio-converter
 ./build.sh --install
 ```
 
-This builds the app and copies it to `/Applications`. Run `./build.sh` without the flag to build into `./build` only.
-
-The first time you open a self-built copy, macOS may ask you to confirm. Right-click the app, choose **Open**, then confirm.
+This builds the app and copies it to `/Applications`. A source build uses the FFmpeg on your system (`brew install ffmpeg`). To build the self-contained version with FFmpeg included, run `scripts/release.sh <version>`; it compiles FFmpeg from source first, which takes about 15 minutes.
 
 ## How it works
 
-The app is written in Swift and SwiftUI. It looks at each file with `ffprobe`, works out the best FFmpeg command for the format and settings you picked, and runs the conversions in the background while tracking their progress. It finds FFmpeg automatically from Homebrew or MacPorts, or you can point it at your own build in **Settings → Engine**.
+The app is written in Swift and SwiftUI. It looks at each file with `ffprobe`, works out the best FFmpeg command for the format and settings you picked, and runs the conversions in the background while tracking their progress. The downloadable app ships with its own copy of FFmpeg, built from official sources (see [third-party licenses](docs/THIRD_PARTY.md)). You can point it at a different build in **Settings → Engine**.
 
 ## Contributing
 

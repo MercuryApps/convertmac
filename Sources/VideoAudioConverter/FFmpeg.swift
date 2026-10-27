@@ -58,7 +58,7 @@ final class FFmpegToolkit: ObservableObject {
         if let custom = UserDefaults.standard.string(forKey: Self.customPathKey), !custom.isEmpty {
             candidates.append(custom)
         }
-        if let bundled = Bundle.main.resourceURL?.appendingPathComponent("bin/ffmpeg").path {
+        if let bundled = Bundle.main.url(forAuxiliaryExecutable: "ffmpeg")?.path {
             candidates.append(bundled)
         }
         candidates += ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/opt/local/bin/ffmpeg", "/usr/bin/ffmpeg"]
