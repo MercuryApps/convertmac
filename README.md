@@ -41,27 +41,42 @@ If it saves you time, the best thanks is to star the repo, tell a friend, or fil
 **Formats**
 - **Video:** MP4 (H.264, HEVC, AV1), MOV, Apple ProRes, MKV, WebM (VP9, AV1), M4V, AVI, WMV, MPEG-2, TS
 - **Audio:** MP3, M4A (AAC), Apple Lossless, FLAC, WAV, AIFF, OGG Vorbis, Opus, AC3, WMA
+- **Images:** HEIC, JPEG, PNG, WebP and TIFF, including iPhone photos and RAW files
 - **Animated GIF**, with high-quality palettes
-- **Extract audio** from any video
+- **Extract audio** from any video, or save a still frame or album artwork as an image
 - Reads almost anything FFmpeg can open, including old camcorder files, phone recordings and obscure formats
 
 **Presets**
 - iPhone, iPad, Apple TV 4K, Android, YouTube, Instagram & TikTok, Web, Smart TV
 - "Small" for email and chat, plus iPhone ringtones (.m4r)
+- **Save your own presets** and reuse them with one click
+
+**Fits where it needs to go**
+- **Compress to a file size:** pick 10 MB for Discord, 16 MB for WhatsApp or 25 MB for email, and each file is squeezed to fit
+- **iPhone HDR done right:** HDR videos are tone-mapped so they don't look washed out on normal screens, or kept as true 10-bit HDR when the format supports it
+- **Merge** several clips or songs into one file, in the order you choose
+
+**Edit before you convert**
+- Visual trim with a filmstrip timeline and draggable start and end handles
+- Crop with aspect presets (16:9, 9:16, 1:1, 4:3, 2.39:1), or remove black bars automatically
+- Add subtitle files (SRT, ASS, WebVTT) as a track, or burn them into the picture
+- Edit music tags (title, artist, album, year, genre, track) and album artwork
+- Text or image watermark, with position, size and opacity
+- Fade in and out, reduce video noise, reduce background hiss, stabilize shaky footage
+- Playback speed from 0.25× to 4×, rotate, flip, deinterlace
 
 **Control when you want it**
 - Resolution: 4K down to 240p, or any custom size with letterboxing
-- Frame rate, constant quality or target bitrate, encoder speed
+- Frame rate, constant quality, target bitrate or target file size, encoder speed
 - Audio codec, bitrate, sample rate, mono, stereo or 5.1, 16- or 24-bit
 - Volume boost and loudness normalization (EBU R128)
-- Trim each file, pick which audio track to keep (or keep them all)
-- Playback speed from 0.25× to 4×, rotate, flip, deinterlace
+- Pick which audio track to keep, or keep them all
 - Remux without re-encoding when you only need a different container
-- Keeps subtitles, metadata and chapters
+- Keeps subtitles, metadata, chapters and album artwork
 
 **Built for batches**
-- Drag in files or whole folders
-- Several conversions run at once, with hardware acceleration on Apple Silicon
+- Drag in files or whole folders, or right-click files in Finder and choose **Services → Convert with Video & Audio Converter**
+- Several conversions run at once, with hardware acceleration
 - Pause, resume or cancel any file, with live progress, time remaining and speed
 - Keeps your Mac awake while it works, and notifies you when it's done
 - Never touches your originals: saves next to the original or in a folder you choose
@@ -69,7 +84,7 @@ If it saves you time, the best thanks is to star the repo, tell a friend, or fil
 
 ## Install
 
-Requires a Mac with Apple Silicon (M1 or later) running macOS 14 Sonoma or newer. Everything is included, so you don't need to install anything else.
+Runs on any Mac with macOS 14 Sonoma or newer, Apple Silicon or Intel. Everything is included, so you don't need to install anything else.
 
 ### Download
 
@@ -93,7 +108,7 @@ cd video-audio-converter
 ./build.sh --install
 ```
 
-This builds the app and copies it to `/Applications`. A source build uses the FFmpeg on your system (`brew install ffmpeg`). To build the self-contained version with FFmpeg included, run `scripts/release.sh <version>`; it compiles FFmpeg from source first, which takes about 15 minutes.
+This builds the app and copies it to `/Applications`. A source build uses the FFmpeg on your system (`brew install ffmpeg`). To build the self-contained version with FFmpeg included, run `scripts/release.sh <version>`; it compiles FFmpeg and its codecs from source for both Apple Silicon and Intel first, which takes 30–40 minutes the first time.
 
 ## How it works
 

@@ -12,6 +12,12 @@ The downloadable app includes a copy of FFmpeg built from unmodified official so
 | libvpx | 1.17.0 | BSD-3-Clause | https://chromium.googlesource.com/webm/libvpx |
 | SVT-AV1 | 4.2.0 | BSD-3-Clause-Clear | https://gitlab.com/AOMediaCodec/SVT-AV1 |
 | dav1d | 1.5.4 | BSD-2-Clause | https://code.videolan.org/videolan/dav1d |
+| libwebp | 1.6.0 | BSD-3-Clause | https://chromium.googlesource.com/webm/libwebp |
+| zimg | 3.0.6 | WTFPL | https://github.com/sekrit-twc/zimg |
+| libass | 0.17.5 | ISC | https://github.com/libass/libass |
+| FreeType | 2.15.0 | FreeType License (BSD-style) | https://freetype.org |
+| FriBidi | 1.0.17 | LGPL-2.1-or-later | https://github.com/fribidi/fribidi |
+| HarfBuzz | 15.0.0 | MIT ("Old MIT") | https://github.com/harfbuzz/harfbuzz |
 
 The exact source archives used for each release are attached to that release on GitHub as `ffmpeg-sources-<version>.tar`, alongside the build script that produced the binaries.
 

@@ -14,6 +14,26 @@
     <key>LSApplicationCategoryType</key><string>public.app-category.video</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSHumanReadableCopyright</key><string>Free and open. Powered by FFmpeg.</string>
+    <key>NSServices</key>
+    <array>
+        <dict>
+            <key>NSMenuItem</key>
+            <dict>
+                <key>default</key><string>Convert with Video &amp; Audio Converter</string>
+            </dict>
+            <key>NSMessage</key><string>convertFiles</string>
+            <key>NSPortName</key><string>Video &amp; Audio Converter</string>
+            <key>NSRequiredContext</key><dict/>
+            <key>NSSendFileTypes</key>
+            <array>
+                <string>public.movie</string>
+                <string>public.audio</string>
+                <string>public.audiovisual-content</string>
+                <string>public.image</string>
+                <string>public.folder</string>
+            </array>
+        </dict>
+    </array>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>
@@ -25,6 +45,7 @@
                 <string>public.audiovisual-content</string>
                 <string>public.movie</string>
                 <string>public.audio</string>
+                <string>public.image</string>
                 <string>public.folder</string>
             </array>
         </dict>

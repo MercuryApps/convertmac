@@ -1,9 +1,14 @@
+import AppKit
 import SwiftUI
 
 struct SettingsPanel: View {
     @EnvironmentObject private var queue: QueueManager
     @EnvironmentObject private var toolkit: FFmpegToolkit
     @State private var category: FormatCategory = .video
+    @State private var showSavePreset = false
+    @State private var presetName = ""
+    @State private var renaming: UserPreset?
+    @State private var renameText = ""
 
     private var format: OutputFormat { queue.format }
     private var s: ConversionSettings { queue.settings }
@@ -13,20 +18,44 @@ struct SettingsPanel: View {
     private var audioCopy: Bool { acodec == .copy }
     private var usesHardware: Bool {
         guard let hw = vcodec.hardwareEncoder else { return false }
-        return s.hardwareAcceleration && toolkit.has(hw)
+        return s.hardwareAcceleration && toolkit.has(hw) && s.rateControl != .targetSize
     }
 
     var body: some View {
         Form {
             formatSection
-            if format.kind == .video { videoSection }
-            if format.kind == .gif { gifSection }
-            if format.kind != .gif { audioSection }
-            adjustSection
-            if format.kind != .gif { extrasSection }
+            switch format.kind {
+            case .image:
+                imageSection
+                imageEditSection
+            case .video:
+                videoSection
+                audioSection
+                editSection
+                effectsSection
+                watermarkSection
+                extrasSection
+            case .gif:
+                gifSection
+                editSection
+                effectsSection
+                watermarkSection
+                extrasSection
+            case .audio:
+                audioSection
+                editSection
+                effectsSection
+                extrasSection
+            }
             Section {
-                Button("Reset \(format.name) to Defaults") { queue.select(format: format) }
-                    .frame(maxWidth: .infinity)
+                HStack {
+                    Button("Save as Preset…") {
+                        presetName = ""
+                        showSavePreset = true
+                    }
+                    Spacer()
+                    Button("Reset to Defaults") { queue.select(format: format) }
+                }
             }
         }
         .formStyle(.grouped)
@@ -42,6 +71,25 @@ struct SettingsPanel: View {
                 queue.settings.sampleRate = 0
             }
         }
+        .alert("Save Preset", isPresented: $showSavePreset) {
+            TextField("Name", text: $presetName)
+            Button("Save") {
+                queue.savePreset(named: presetName)
+                category = .saved
+            }
+            .disabled(presetName.trimmingCharacters(in: .whitespaces).isEmpty)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Saves the current format and every setting so you can reuse them with one click.")
+        }
+        .alert("Rename Preset", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField("Name", text: $renameText)
+            Button("Rename") {
+                if let p = renaming { queue.rename(preset: p, to: renameText) }
+                renaming = nil
+            }
+            Button("Cancel", role: .cancel) { renaming = nil }
+        }
     }
 
     private var formatSection: some View {
@@ -52,14 +100,20 @@ struct SettingsPanel: View {
             .pickerStyle(.segmented)
             .labelsHidden()
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)], spacing: 8) {
-                ForEach(OutputFormat.all.filter { $0.category == category }) { f in
-                    FormatTile(format: f, selected: f.id == format.id, available: isAvailable(f)) {
-                        queue.select(format: f)
+            if category == .saved {
+                savedPresets
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)], spacing: 8) {
+                    ForEach(OutputFormat.all.filter { $0.category == category }) { f in
+                        FormatTile(name: f.name, detail: f.detail, symbol: f.symbol,
+                                   selected: f.id == format.id && queue.activePresetID == nil,
+                                   available: isAvailable(f)) {
+                            queue.select(format: f)
+                        }
                     }
                 }
+                .padding(.vertical, 4)
             }
-            .padding(.vertical, 4)
         } header: {
             Text("Convert to")
         } footer: {
@@ -68,7 +122,48 @@ struct SettingsPanel: View {
         }
     }
 
+    @ViewBuilder private var savedPresets: some View {
+        if queue.presets.isEmpty {
+            VStack(spacing: 6) {
+                Image(systemName: "star")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+                Text("No saved presets yet")
+                    .font(.callout.weight(.medium))
+                Text("Set up a format the way you like it, then click Save as Preset at the bottom.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+        } else {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)], spacing: 8) {
+                ForEach(queue.presets) { p in
+                    let f = OutputFormat.with(id: p.settings.formatID)
+                    FormatTile(name: p.name, detail: "\(f.name) · .\(f.ext)", symbol: "star.fill",
+                               selected: queue.activePresetID == p.id, available: true) {
+                        queue.apply(preset: p)
+                    }
+                    .contextMenu {
+                        Button("Update with Current Settings") { queue.savePreset(named: p.name) }
+                        Button("Rename…") {
+                            renameText = p.name
+                            renaming = p
+                        }
+                        Divider()
+                        Button("Delete", role: .destructive) { queue.delete(preset: p) }
+                    }
+                }
+            }
+            .padding(.vertical, 4)
+        }
+    }
+
     private func isAvailable(_ f: OutputFormat) -> Bool {
+        if f.kind == .image {
+            return ImageConverter.canWrite(f.ext) || toolkit.has("libwebp")
+        }
         guard toolkit.checked, toolkit.isAvailable else { return true }
         if let v = f.videoCodecs.first, v != .copy, v != .gif, !toolkit.has(v.softwareEncoder) && !(v.hardwareEncoder.map(toolkit.has) ?? false) {
             return false
@@ -83,7 +178,7 @@ struct SettingsPanel: View {
                     Text(c.label).tag(c)
                 }
             }
-            if let hw = vcodec.hardwareEncoder, toolkit.has(hw) {
+            if let hw = vcodec.hardwareEncoder, toolkit.has(hw), s.rateControl != .targetSize {
                 Toggle(isOn: $queue.settings.hardwareAcceleration) {
                     Text("Hardware acceleration")
                     Text("Much faster using Apple's media engine")
@@ -125,12 +220,12 @@ struct SettingsPanel: View {
                 }
                 if vcodec.supportsBitrate {
                     Picker("Size control", selection: $queue.settings.rateControl) {
-                        Text("Quality").tag(RateControl.quality)
-                        Text("Bitrate").tag(RateControl.bitrate)
+                        ForEach(RateControl.allCases) { Text($0.label).tag($0) }
                     }
                     .pickerStyle(.segmented)
                 }
-                if s.rateControl == .bitrate && vcodec.supportsBitrate {
+                switch (vcodec.supportsBitrate ? s.rateControl : .quality) {
+                case .bitrate:
                     LabeledContent("Bitrate") {
                         HStack(spacing: 4) {
                             TextField("kbps", value: $queue.settings.videoBitrate, format: .number.grouping(.never))
@@ -140,7 +235,29 @@ struct SettingsPanel: View {
                             Text("kbps").foregroundStyle(.secondary)
                         }
                     }
-                } else {
+                case .targetSize:
+                    LabeledContent("Target size") {
+                        HStack(spacing: 4) {
+                            TextField("MB", value: $queue.settings.targetSizeMB, format: .number.precision(.fractionLength(0...1)))
+                                .frame(width: 64)
+                                .multilineTextAlignment(.trailing)
+                                .labelsHidden()
+                            Text("MB").foregroundStyle(.secondary)
+                            Menu {
+                                ForEach([("Discord (free)", 10.0), ("WhatsApp", 16.0), ("Email", 25.0), ("Discord Nitro", 50.0), ("100 MB", 100.0)], id: \.0) { item in
+                                    Button("\(item.0) · \(Fmt.number(item.1)) MB") { queue.settings.targetSizeMB = item.1 }
+                                }
+                            } label: {
+                                Image(systemName: "chevron.down.circle")
+                            }
+                            .menuStyle(.borderlessButton)
+                            .fixedSize()
+                        }
+                    }
+                    Text("Each file is squeezed to fit, with a little headroom. Very long videos at small sizes will look soft.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                case .quality:
                     Picker(vcodec == .prores ? "Profile" : "Quality", selection: $queue.settings.quality) {
                         if vcodec == .prores {
                             Text("422 HQ").tag(QualityLevel.best)
@@ -157,8 +274,23 @@ struct SettingsPanel: View {
                         ForEach(EncoderSpeed.allCases) { Text($0.label).tag($0) }
                     }
                 }
+                Picker(selection: $queue.settings.hdrMode) {
+                    ForEach(HDRMode.allCases) { Text($0.label).tag($0) }
+                } label: {
+                    Text("HDR videos")
+                    Text(hdrHint)
+                }
             }
             .disabled(videoCopy)
+        }
+    }
+
+    private var hdrHint: String {
+        let canKeep = [.hevc, .av1, .vp9, .prores].contains(vcodec) && format.supportsHDR
+        switch s.hdrMode {
+        case .toneMap: return "HDR footage is converted to normal colors for any screen"
+        case .automatic: return canKeep ? "HDR is kept with \(vcodec.label)" : "Converted to normal colors so it doesn't look washed out"
+        case .keep: return canKeep ? "Kept as 10-bit HDR" : "\(vcodec.label) can't store HDR, so it's converted"
         }
     }
 
@@ -174,6 +306,49 @@ struct SettingsPanel: View {
             Text("Tip: trim clips to a few seconds — GIFs get big fast.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private var imageSection: some View {
+        Section("Image") {
+            if ["jpg", "heic", "webp"].contains(format.ext) {
+                LabeledContent("Quality") {
+                    HStack {
+                        Slider(value: $queue.settings.imageQuality, in: 0.3...1, step: 0.05)
+                        Text("\(Int(s.imageQuality * 100))%")
+                            .monospacedDigit()
+                            .frame(width: 40, alignment: .trailing)
+                    }
+                }
+            }
+            Picker("Size", selection: $queue.settings.imageMaxSize) {
+                Text("Original").tag(0)
+                Divider()
+                ForEach([4096, 3000, 2048, 1600, 1080, 800, 512], id: \.self) { Text("Longest side \($0) px").tag($0) }
+            }
+            Toggle("Keep photo details (EXIF)", isOn: $queue.settings.keepMetadata)
+            Toggle("Remove location", isOn: $queue.settings.stripLocation)
+                .disabled(!s.keepMetadata)
+            Text("Videos added here export a still frame from the trim start point.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var imageEditSection: some View {
+        Section("Edit") {
+            rotatePicker
+            Toggle("Flip horizontally", isOn: $queue.settings.flipHorizontal)
+            Toggle("Flip vertically", isOn: $queue.settings.flipVertical)
+        }
+    }
+
+    private var rotatePicker: some View {
+        Picker("Rotate", selection: $queue.settings.rotation) {
+            Text("None").tag(0)
+            Text("90° clockwise").tag(90)
+            Text("180°").tag(180)
+            Text("90° counter-clockwise").tag(270)
         }
     }
 
@@ -220,10 +395,11 @@ struct SettingsPanel: View {
         }
     }
 
-    private var adjustSection: some View {
+    private var hasVideo: Bool { format.kind == .video || format.kind == .gif }
+    private var hasAudio: Bool { format.kind == .audio || (format.kind == .video && !s.removeAudio) }
+
+    private var editSection: some View {
         Section("Edit") {
-            let hasVideo = format.kind != .audio
-            let hasAudio = format.kind != .gif && !(format.kind == .video && s.removeAudio)
             Picker("Playback speed", selection: $queue.settings.playbackSpeed) {
                 ForEach([0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0], id: \.self) { v in
                     Text(v == 1 ? "Normal" : "\(Fmt.number(v))×").tag(v)
@@ -233,18 +409,13 @@ struct SettingsPanel: View {
 
             if hasVideo {
                 Group {
-                    Picker("Rotate", selection: $queue.settings.rotation) {
-                        Text("None").tag(0)
-                        Text("90° clockwise").tag(90)
-                        Text("180°").tag(180)
-                        Text("90° counter-clockwise").tag(270)
-                    }
+                    rotatePicker
                     Toggle("Flip horizontally", isOn: $queue.settings.flipHorizontal)
                     Toggle("Flip vertically", isOn: $queue.settings.flipVertical)
                     if format.kind == .video {
                         Toggle(isOn: $queue.settings.deinterlace) {
                             Text("Deinterlace")
-                            Text("Removes comb lines from old TV / camcorder footage")
+                            Text("Removes comb lines from old TV and camcorder footage")
                         }
                     }
                 }
@@ -272,21 +443,108 @@ struct SettingsPanel: View {
         }
     }
 
+    private var effectsSection: some View {
+        Section("Effects") {
+            let fades = [0.0, 0.5, 1, 2, 3, 5]
+            Picker("Fade in", selection: $queue.settings.fadeIn) {
+                ForEach(fades, id: \.self) { Text($0 == 0 ? "Off" : "\(Fmt.number($0)) s").tag($0) }
+            }
+            Picker("Fade out", selection: $queue.settings.fadeOut) {
+                ForEach(fades, id: \.self) { Text($0 == 0 ? "Off" : "\(Fmt.number($0)) s").tag($0) }
+            }
+            if hasVideo {
+                Toggle(isOn: $queue.settings.denoiseVideo) {
+                    Text("Reduce video noise")
+                    Text("Cleans up grain in dark or low-light footage")
+                }
+                Toggle(isOn: $queue.settings.stabilize) {
+                    Text("Stabilize")
+                    Text("Smooths out small camera shakes")
+                }
+            }
+            if hasAudio {
+                Toggle(isOn: $queue.settings.denoiseAudio) {
+                    Text("Reduce background noise")
+                    Text("Removes hiss and hum from recordings")
+                }
+            }
+        }
+        .disabled(videoCopy || (format.kind == .audio && audioCopy))
+    }
+
+    private var watermarkSection: some View {
+        Section("Watermark") {
+            Toggle("Add watermark", isOn: $queue.settings.watermarkEnabled)
+            if s.watermarkEnabled {
+                Picker("Type", selection: $queue.settings.watermarkKind) {
+                    Text("Text").tag(WatermarkKind.text)
+                    Text("Image").tag(WatermarkKind.image)
+                }
+                .pickerStyle(.segmented)
+                if s.watermarkKind == .text {
+                    TextField("Text", text: $queue.settings.watermarkText, prompt: Text("© Your Name"))
+                } else {
+                    LabeledContent("Image") {
+                        HStack {
+                            Text(s.watermarkImagePath.isEmpty ? "None" : URL(fileURLWithPath: s.watermarkImagePath).lastPathComponent)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .foregroundStyle(.secondary)
+                            Button("Choose…") { chooseWatermarkImage() }
+                        }
+                    }
+                }
+                Picker("Position", selection: $queue.settings.watermarkPosition) {
+                    ForEach(WatermarkPosition.allCases) { Text($0.label).tag($0) }
+                }
+                LabeledContent("Size") {
+                    Slider(value: $queue.settings.watermarkSize, in: 5...40, step: 1)
+                }
+                LabeledContent("Opacity") {
+                    Slider(value: $queue.settings.watermarkOpacity, in: 0.1...1, step: 0.05)
+                }
+            }
+        }
+        .disabled(videoCopy)
+    }
+
+    private func chooseWatermarkImage() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.png, .jpeg, .heic, .tiff]
+        panel.message = "Choose a logo or image. PNGs with transparency work best."
+        if panel.runModal() == .OK, let url = panel.url {
+            queue.settings.watermarkImagePath = url.path
+        }
+    }
+
     private var extrasSection: some View {
-        Section("Extras") {
+        Section {
             if format.kind == .video && format.supportsSubtitles {
                 Toggle(isOn: $queue.settings.keepSubtitles) {
                     Text("Keep subtitles")
                     Text(format.ext == "mkv" ? "All subtitle tracks are copied" : "Text subtitles (SRT, ASS…) are kept")
                 }
             }
-            Toggle("Keep metadata & chapters", isOn: $queue.settings.keepMetadata)
+            if format.kind != .gif {
+                Toggle("Keep metadata & chapters", isOn: $queue.settings.keepMetadata)
+            }
+            if format.supportsCoverArt {
+                Toggle("Keep album artwork", isOn: $queue.settings.keepCoverArt)
+            }
+            Toggle(isOn: $queue.settings.mergeFiles) {
+                Text("Merge all files into one")
+                Text("Joins the list top to bottom. Drag files to change the order.")
+            }
+        } header: {
+            Text("Extras")
         }
     }
 }
 
 struct FormatTile: View {
-    let format: OutputFormat
+    let name: String
+    let detail: String
+    let symbol: String
     let selected: Bool
     let available: Bool
     let action: () -> Void
@@ -294,13 +552,13 @@ struct FormatTile: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
-                Image(systemName: format.symbol)
+                Image(systemName: symbol)
                     .font(.system(size: 18, weight: .medium))
                     .frame(height: 22)
-                Text(format.name)
+                Text(name)
                     .font(.callout.weight(.semibold))
                     .lineLimit(1)
-                Text(format.detail)
+                Text(detail)
                     .font(.system(size: 9))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -323,6 +581,7 @@ struct FormatTile: View {
         }
         .buttonStyle(.plain)
         .opacity(available ? 1 : 0.4)
-        .help(available ? "\(format.name) — \(format.detail)" : "Your FFmpeg build lacks the encoder for \(format.name)")
+        .disabled(!available)
+        .help(available ? "\(name) — \(detail)" : "\(name) isn't available with this FFmpeg build")
     }
 }

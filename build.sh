@@ -5,8 +5,8 @@ cd "$(dirname "$0")"
 APP_NAME="Video & Audio Converter"
 EXE="VideoAudioConverter"
 
-swift build -c release
-BIN="$(swift build -c release --show-bin-path)/$EXE"
+swift build -c release --arch arm64 --arch x86_64
+BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/$EXE"
 
 WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT

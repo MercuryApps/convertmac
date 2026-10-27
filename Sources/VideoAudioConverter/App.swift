@@ -45,7 +45,16 @@ struct VideoAudioConverterApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.servicesProvider = self
+        NSUpdateDynamicServices()
         Task { await FFmpegToolkit.shared.refresh() }
+    }
+
+    @objc func convertFiles(_ pboard: NSPasteboard, userData: String, error: AutoreleasingUnsafeMutablePointer<NSString>) {
+        let urls = pboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+        guard !urls.isEmpty else { return }
+        QueueManager.shared.add(urls: urls)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {

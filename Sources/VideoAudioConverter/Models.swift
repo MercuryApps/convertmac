@@ -1,13 +1,15 @@
 import Foundation
 
 enum MediaKind: String, Codable {
-    case video, audio, gif
+    case video, audio, gif, image
 }
 
 enum FormatCategory: String, CaseIterable, Identifiable {
     case video = "Video"
     case audio = "Audio"
     case devices = "Devices"
+    case image = "Image"
+    case saved = "Saved"
     var id: String { rawValue }
 }
 
@@ -26,9 +28,46 @@ enum QualityLevel: Int, Codable, CaseIterable, Identifiable {
 }
 
 enum RateControl: String, Codable, CaseIterable, Identifiable {
-    case quality, bitrate
+    case quality, bitrate, targetSize
     var id: String { rawValue }
-    var label: String { self == .quality ? "Quality" : "Bitrate" }
+    var label: String {
+        switch self {
+        case .quality: return "Quality"
+        case .bitrate: return "Bitrate"
+        case .targetSize: return "File size"
+        }
+    }
+}
+
+enum HDRMode: String, Codable, CaseIterable, Identifiable {
+    case automatic, toneMap, keep
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .automatic: return "Automatic"
+        case .toneMap: return "Convert to SDR"
+        case .keep: return "Keep HDR"
+        }
+    }
+}
+
+enum WatermarkKind: String, Codable, CaseIterable, Identifiable {
+    case text, image
+    var id: String { rawValue }
+}
+
+enum WatermarkPosition: String, Codable, CaseIterable, Identifiable {
+    case topLeft, topRight, center, bottomLeft, bottomRight
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .topLeft: return "Top left"
+        case .topRight: return "Top right"
+        case .center: return "Center"
+        case .bottomLeft: return "Bottom left"
+        case .bottomRight: return "Bottom right"
+        }
+    }
 }
 
 enum EncoderSpeed: String, Codable, CaseIterable, Identifiable {
@@ -188,6 +227,8 @@ struct OutputFormat: Identifiable, Hashable {
     var defaultAudioCodec: AudioCodec { audioCodecs.first ?? .aac }
     var isMP4Family: Bool { ["mp4", "mov", "m4v", "m4a", "m4r"].contains(ext) }
     var supportsSubtitles: Bool { ["mkv", "mp4", "mov", "m4v"].contains(ext) }
+    var supportsCoverArt: Bool { ["mp3", "m4a", "m4r", "flac"].contains(ext) }
+    var supportsHDR: Bool { kind == .video && ["mp4", "mov", "mkv", "webm", "m4v", "ts"].contains(ext) }
 
     static func with(id: String) -> OutputFormat {
         all.first { $0.id == id } ?? all[0]
@@ -272,6 +313,17 @@ struct OutputFormat: Identifiable, Hashable {
                      preset: FormatPreset(resolution: 1080, quality: .high, audioBitrate: 448)),
         OutputFormat(id: "ringtone", name: "Ringtone", detail: "iPhone .m4r · ≤40 s", category: .devices, ext: "m4r", kind: .audio,
                      symbol: "bell", videoCodecs: [], audioCodecs: [.aac], preset: FormatPreset(audioBitrate: 256)),
+
+        OutputFormat(id: "jpg", name: "JPEG", detail: "Photos · universal", category: .image, ext: "jpg", kind: .image,
+                     symbol: "photo", videoCodecs: [], audioCodecs: []),
+        OutputFormat(id: "png", name: "PNG", detail: "Lossless · transparency", category: .image, ext: "png", kind: .image,
+                     symbol: "photo.artframe", videoCodecs: [], audioCodecs: []),
+        OutputFormat(id: "heic", name: "HEIC", detail: "Apple · half the size", category: .image, ext: "heic", kind: .image,
+                     symbol: "photo.on.rectangle", videoCodecs: [], audioCodecs: []),
+        OutputFormat(id: "webp", name: "WebP", detail: "For the web", category: .image, ext: "webp", kind: .image,
+                     symbol: "globe.americas", videoCodecs: [], audioCodecs: []),
+        OutputFormat(id: "tiff", name: "TIFF", detail: "Print & archive", category: .image, ext: "tiff", kind: .image,
+                     symbol: "printer", videoCodecs: [], audioCodecs: []),
     ]
 }
 
@@ -309,6 +361,87 @@ struct ConversionSettings: Codable, Equatable {
 
     var keepSubtitles = true
     var keepMetadata = true
+    var keepCoverArt = true
+
+    var hdrMode: HDRMode = .automatic
+    var targetSizeMB: Double = 25
+
+    var fadeIn: Double = 0
+    var fadeOut: Double = 0
+    var denoiseVideo = false
+    var denoiseAudio = false
+    var stabilize = false
+
+    var watermarkEnabled = false
+    var watermarkKind: WatermarkKind = .text
+    var watermarkText = ""
+    var watermarkImagePath = ""
+    var watermarkPosition: WatermarkPosition = .bottomRight
+    var watermarkSize: Double = 15
+    var watermarkOpacity: Double = 0.8
+
+    var mergeFiles = false
+
+    var imageQuality: Double = 0.85
+    var imageMaxSize = 0
+    var stripLocation = false
+
+    static func decode(_ data: Data) -> ConversionSettings? {
+        guard let defaults = try? JSONSerialization.jsonObject(with: JSONEncoder().encode(ConversionSettings())) as? [String: Any],
+              let saved = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        let merged = defaults.merging(saved) { _, new in new }
+        guard let json = try? JSONSerialization.data(withJSONObject: merged) else { return nil }
+        return try? JSONDecoder().decode(ConversionSettings.self, from: json)
+    }
+}
+
+struct UserPreset: Codable, Identifiable, Equatable {
+    var id = UUID()
+    var name: String
+    var settings: ConversionSettings
+}
+
+struct NormalizedRect: Codable, Equatable {
+    var x: Double
+    var y: Double
+    var width: Double
+    var height: Double
+
+    static let full = NormalizedRect(x: 0, y: 0, width: 1, height: 1)
+    var isFull: Bool { x <= 0.001 && y <= 0.001 && width >= 0.999 && height >= 0.999 }
+}
+
+struct MediaTags: Equatable {
+    var title = ""
+    var artist = ""
+    var album = ""
+    var albumArtist = ""
+    var year = ""
+    var genre = ""
+    var track = ""
+    var comment = ""
+    var coverURL: URL?
+    var removeCover = false
+
+    var isEmpty: Bool { self == MediaTags() }
+
+    var metadataPairs: [(String, String)] {
+        [("title", title), ("artist", artist), ("album", album), ("album_artist", albumArtist),
+         ("date", year), ("genre", genre), ("track", track), ("comment", comment)]
+    }
+
+    static func from(_ tags: [String: String]) -> MediaTags {
+        var t = MediaTags()
+        t.title = tags["title"] ?? ""
+        t.artist = tags["artist"] ?? ""
+        t.album = tags["album"] ?? ""
+        t.albumArtist = tags["album_artist"] ?? ""
+        t.year = tags["date"] ?? tags["year"] ?? ""
+        t.genre = tags["genre"] ?? ""
+        t.track = tags["track"] ?? ""
+        t.comment = tags["comment"] ?? ""
+        return t
+    }
 }
 
 struct StreamInfo: Identifiable, Hashable {
@@ -327,7 +460,12 @@ struct StreamInfo: Identifiable, Hashable {
     let title: String?
     let isAttachedPic: Bool
     let rotation: Int
+    var colorTransfer: String? = nil
+    var colorPrimaries: String? = nil
+    var pixelFormat: String? = nil
     var id: Int { index }
+
+    var isHDR: Bool { ["smpte2084", "arib-std-b67"].contains(colorTransfer ?? "") }
 
     static let textSubtitleCodecs: Set<String> = ["subrip", "srt", "ass", "ssa", "mov_text", "webvtt", "text"]
     var isTextSubtitle: Bool { Self.textSubtitleCodecs.contains(codec) }
@@ -349,6 +487,10 @@ struct MediaInfo: Hashable {
     let size: Int64
     let bitRate: Int?
     let streams: [StreamInfo]
+    var tags: [String: String] = [:]
+
+    var isHDR: Bool { primaryVideo?.isHDR ?? false }
+    var coverArt: StreamInfo? { streams.first { $0.type == "video" && $0.isAttachedPic } }
 
     var videoStreams: [StreamInfo] { streams.filter { $0.type == "video" && !$0.isAttachedPic } }
     var audioStreams: [StreamInfo] { streams.filter { $0.type == "audio" } }
@@ -405,7 +547,10 @@ struct MediaInfo: Hashable {
                 language: tags["language"] as? String,
                 title: tags["title"] as? String,
                 isAttachedPic: (int(disp["attached_pic"]) ?? 0) == 1,
-                rotation: rot
+                rotation: rot,
+                colorTransfer: s["color_transfer"] as? String,
+                colorPrimaries: s["color_primaries"] as? String,
+                pixelFormat: s["pix_fmt"] as? String
             )
         }
 
@@ -415,7 +560,10 @@ struct MediaInfo: Hashable {
             formatLong: fmt["format_long_name"] as? String ?? "",
             size: Int64(dbl(fmt["size"]) ?? 0),
             bitRate: int(fmt["bit_rate"]),
-            streams: streams
+            streams: streams,
+            tags: Dictionary(((fmt["tags"] as? [String: Any]) ?? [:]).compactMap { k, v in
+                (v as? String).map { (k.lowercased(), $0) }
+            }, uniquingKeysWith: { a, _ in a })
         )
     }
 }
@@ -451,6 +599,7 @@ enum Prefs {
     static let reveal = "revealWhenDone"
     static let preventSleep = "preventSleep"
     static let settings = "conversionSettings"
+    static let presets = "userPresets"
 
     static var defaultOutputFolder: String {
         FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first!

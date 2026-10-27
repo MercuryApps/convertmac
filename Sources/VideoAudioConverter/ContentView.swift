@@ -89,9 +89,9 @@ struct EmptyDropView: View {
                 .foregroundStyle(targeted ? Color.accentColor : .secondary)
                 .symbolEffect(.bounce, value: targeted)
             VStack(spacing: 6) {
-                Text("Drop videos or music here")
+                Text("Drop videos, music or photos here")
                     .font(.title2.weight(.semibold))
-                Text("MP4, MOV, MKV, AVI, WebM, MP3, FLAC, WAV and hundreds more.\nPick a format on the right, then hit Convert.")
+                Text("MP4, MOV, MKV, MP3, FLAC, HEIC, JPEG and hundreds more.\nPick a format on the right, then hit Convert.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
             }

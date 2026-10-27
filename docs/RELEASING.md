@@ -22,7 +22,7 @@
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" NOTARY_PROFILE=notary scripts/release.sh 1.1.0
 ```
 
-This compiles FFmpeg if needed, signs everything with the hardened runtime, builds the DMG, submits it to Apple, staples the notarization ticket, and writes the DMG and the matching FFmpeg source archive to `dist/`. Without `SIGN_IDENTITY` and `NOTARY_PROFILE` it produces an ad-hoc signed DMG instead.
+This compiles a universal FFmpeg (Apple Silicon and Intel) if needed, signs everything with the hardened runtime, builds the DMG, submits it to Apple, staples the notarization ticket, and writes the DMG and the matching FFmpeg source archive to `dist/`. Without `SIGN_IDENTITY` and `NOTARY_PROFILE` it produces an ad-hoc signed DMG instead.
 
 ## Publishing
 

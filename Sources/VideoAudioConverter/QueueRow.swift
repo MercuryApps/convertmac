@@ -4,7 +4,7 @@ import SwiftUI
 struct QueueRow: View {
     @ObservedObject var item: MediaItem
     @EnvironmentObject private var queue: QueueManager
-    @State private var showTrim = false
+    @State private var showEditor = false
     @State private var showInfo = false
 
     var body: some View {
@@ -23,6 +23,11 @@ struct QueueRow: View {
                             .foregroundStyle(.orange)
                             .labelStyle(.titleAndIcon)
                     }
+                    if item.isCropped { badge("crop", "Cropped") }
+                    if item.subtitleURL != nil || item.burnSubtitles {
+                        badge("captions.bubble", item.burnSubtitles ? "Subtitles burned in" : "Subtitle file added")
+                    }
+                    if item.tagsEdited { badge("tag", "Tags edited") }
                 }
                 Text(item.summary)
                     .font(.caption)
@@ -37,6 +42,14 @@ struct QueueRow: View {
         .padding(.vertical, 6)
         .contentShape(Rectangle())
         .contextMenu { contextMenu }
+        .sheet(isPresented: $showEditor) { EditorView(item: item) }
+    }
+
+    private func badge(_ symbol: String, _ help: String) -> some View {
+        Image(systemName: symbol)
+            .font(.caption)
+            .foregroundStyle(.orange)
+            .help(help)
     }
 
     private var trimLabel: String {
@@ -49,9 +62,13 @@ struct QueueRow: View {
         HStack(spacing: 10) {
             switch item.status {
             case .converting, .paused:
-                iconButton(item.status == .paused ? "play.fill" : "pause.fill",
-                           help: item.status == .paused ? "Resume" : "Pause") { queue.togglePause(item) }
-                iconButton("stop.fill", help: "Cancel") { queue.cancel(item) }
+                if queue.canPause(item) {
+                    iconButton(item.status == .paused ? "play.fill" : "pause.fill",
+                               help: item.status == .paused ? "Resume" : "Pause") { queue.togglePause(item) }
+                    iconButton("stop.fill", help: "Cancel") { queue.cancel(item) }
+                } else {
+                    ProgressView().controlSize(.small)
+                }
             case .done:
                 iconButton("play.circle", help: "Open converted file") {
                     if let u = item.outputURL { NSWorkspace.shared.open(u) }
@@ -76,9 +93,10 @@ struct QueueRow: View {
     }
 
     @ViewBuilder private var editButtons: some View {
-        iconButton("scissors", help: "Trim & audio track") { showTrim = true }
-            .popover(isPresented: $showTrim, arrowEdge: .bottom) { TrimPopover(item: item) }
-            .disabled(item.info == nil)
+        if !item.isImage {
+            iconButton("slider.horizontal.3", help: "Trim, crop, subtitles & tags") { showEditor = true }
+                .disabled(item.info == nil)
+        }
         iconButton("info.circle", help: "Media info") { showInfo = true }
             .popover(isPresented: $showInfo, arrowEdge: .bottom) { MediaInfoPopover(item: item) }
             .disabled(item.info == nil)
@@ -103,7 +121,9 @@ struct QueueRow: View {
         Button("Open Original") { NSWorkspace.shared.open(item.url) }
         Button("Show Original in Finder") { NSWorkspace.shared.activateFileViewerSelecting([item.url]) }
         Divider()
-        Button("Trim & Audio Track…") { showTrim = true }.disabled(item.info == nil)
+        if !item.isImage {
+            Button("Edit (Trim, Crop, Subtitles, Tags)…") { showEditor = true }.disabled(item.info == nil)
+        }
         Button("Media Info…") { showInfo = true }.disabled(item.info == nil)
         Button("Copy FFmpeg Command") {
             NSPasteboard.general.clearContents()
@@ -141,8 +161,16 @@ struct StatusLine: View {
                 }
                 .foregroundStyle(.secondary)
             case .ready:
-                Label("Ready → \(queue.format.name) (.\(queue.format.ext))", systemImage: "circle.dashed")
-                    .foregroundStyle(.secondary)
+                if item.isImage && queue.format.kind != .image {
+                    Label("Photos need an image format — pick one in the Image tab", systemImage: "exclamationmark.circle")
+                        .foregroundStyle(.orange)
+                } else if queue.settings.mergeFiles && queue.format.kind != .image && !item.isImage {
+                    Label("Ready → merged into one \(queue.format.name)", systemImage: "rectangle.stack")
+                        .foregroundStyle(.secondary)
+                } else {
+                    Label("Ready → \(queue.format.name) (.\(queue.format.ext))", systemImage: "circle.dashed")
+                        .foregroundStyle(.secondary)
+                }
             case .queued:
                 Label("Waiting…", systemImage: "clock")
                     .foregroundStyle(.secondary)
@@ -224,79 +252,6 @@ struct ThumbnailView: View {
         .frame(width: 96, height: 54)
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(.separator, lineWidth: 0.5))
-    }
-}
-
-struct TrimPopover: View {
-    @ObservedObject var item: MediaItem
-    @Environment(\.dismiss) private var dismiss
-    @State private var startText = ""
-    @State private var endText = ""
-    @State private var error: String?
-
-    var body: some View {
-        let duration = item.info?.duration ?? 0
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Trim & Tracks").font(.headline)
-            Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 8) {
-                GridRow {
-                    Text("Start")
-                    TextField("0:00", text: $startText).frame(width: 110)
-                }
-                GridRow {
-                    Text("End")
-                    TextField(Fmt.timestamp(duration), text: $endText).frame(width: 110)
-                }
-            }
-            Text("Use seconds or h:mm:ss — e.g. 90, 1:30 or 0:01:30.5. Leave End empty to go to the end (\(Fmt.duration(duration))).")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if let tracks = item.info?.audioStreams, tracks.count > 1 {
-                Picker("Audio", selection: $item.audioTrack) {
-                    ForEach(Array(tracks.enumerated()), id: \.offset) { i, t in
-                        Text(t.trackLabel).tag(i)
-                    }
-                    Divider()
-                    Text("All tracks (MKV/MP4/MOV)").tag(-1)
-                }
-            }
-
-            if let error {
-                Text(error).font(.caption).foregroundStyle(.red)
-            }
-
-            HStack {
-                Button("Reset") {
-                    item.trimStart = nil
-                    item.trimEnd = nil
-                    item.audioTrack = 0
-                    dismiss()
-                }
-                Spacer()
-                Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
-                Button("Apply") { apply(duration: duration) }.keyboardShortcut(.defaultAction)
-            }
-        }
-        .padding(16)
-        .frame(width: 330)
-        .onAppear {
-            startText = item.trimStart.map(Fmt.timestamp) ?? ""
-            endText = item.trimEnd.map(Fmt.timestamp) ?? ""
-        }
-    }
-
-    private func apply(duration: Double) {
-        let start = startText.isEmpty ? 0 : Fmt.parseTime(startText)
-        let end = endText.isEmpty ? nil : Fmt.parseTime(endText)
-        guard let start else { error = "Start time isn't valid"; return }
-        if !endText.isEmpty && end == nil { error = "End time isn't valid"; return }
-        if let end, end <= start { error = "End must be after start"; return }
-        if duration > 0, start >= duration { error = "Start is past the end of the file"; return }
-        item.trimStart = start > 0 ? start : nil
-        item.trimEnd = end.flatMap { duration > 0 && $0 >= duration ? nil : $0 }
-        dismiss()
     }
 }
 
