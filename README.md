@@ -1,0 +1,106 @@
+<p align="center">
+  <img src="docs/icon.png" width="128" alt="Video & Audio Converter icon">
+</p>
+
+<h1 align="center">Video &amp; Audio Converter</h1>
+
+<p align="center">
+  A free, native Mac app for converting video and audio.<br>
+  No ads. No watermarks. No subscriptions. No "Pro" upgrade. Ever.
+</p>
+
+<p align="center">
+  <img src="docs/screenshot.png" alt="Video & Audio Converter screenshot" width="860">
+</p>
+
+---
+
+## Why this exists
+
+It started with something small: I needed to turn a few phone videos into a format my TV would play.
+
+I searched the App Store for a video converter and spent the next hour downloading apps. Every one of them did the same thing. They let me drop in a file, then showed a paywall. Some stamped a watermark across the video. Some only converted the first few minutes. Others wanted a weekly subscription just to change MP4 to MOV.
+
+What annoyed me most is that the hard part was already solved, and it was free. Almost all of these apps are wrappers around [FFmpeg](https://ffmpeg.org), an open-source project that thousands of volunteers have built over two decades. The apps were charging rent on work that was given away.
+
+So I built the converter I was looking for: a clean, native Mac app that does the job and gets out of the way.
+
+## Why it's free
+
+Because it should be.
+
+- **Converting a file is a solved problem.** FFmpeg already does the heavy lifting, and it's free. This app puts a friendly face on it, and it would be strange to charge for that.
+- **No business model means no dark patterns.** There's nothing to upsell, so there's no reason to cripple features, nag you or hide things behind a paywall.
+- **No tracking.** The app never connects to the internet. Your files stay on your Mac, and there are no accounts, analytics or telemetry.
+- **It stays free.** The app is licensed under the GPL, so nobody can take it, close the source and sell it back to you.
+
+If it saves you time, the best thanks is to star the repo, tell a friend, or file an issue when something breaks.
+
+## Features
+
+**Formats**
+- **Video:** MP4 (H.264, HEVC, AV1), MOV, Apple ProRes, MKV, WebM (VP9, AV1), M4V, AVI, WMV, MPEG-2, TS
+- **Audio:** MP3, M4A (AAC), Apple Lossless, FLAC, WAV, AIFF, OGG Vorbis, Opus, AC3, WMA
+- **Animated GIF**, with high-quality palettes
+- **Extract audio** from any video
+- Reads almost anything FFmpeg can open, including old camcorder files, phone recordings and obscure formats
+
+**Presets**
+- iPhone, iPad, Apple TV 4K, Android, YouTube, Instagram & TikTok, Web, Smart TV
+- "Small" for email and chat, plus iPhone ringtones (.m4r)
+
+**Control when you want it**
+- Resolution: 4K down to 240p, or any custom size with letterboxing
+- Frame rate, constant quality or target bitrate, encoder speed
+- Audio codec, bitrate, sample rate, mono, stereo or 5.1, 16- or 24-bit
+- Volume boost and loudness normalization (EBU R128)
+- Trim each file, pick which audio track to keep (or keep them all)
+- Playback speed from 0.25× to 4×, rotate, flip, deinterlace
+- Remux without re-encoding when you only need a different container
+- Keeps subtitles, metadata and chapters
+
+**Built for batches**
+- Drag in files or whole folders
+- Several conversions run at once, with hardware acceleration on Apple Silicon
+- Pause, resume or cancel any file, with live progress, time remaining and speed
+- Keeps your Mac awake while it works, and notifies you when it's done
+- Never touches your originals: saves next to the original or in a folder you choose
+- **Copy FFmpeg Command** on any file, if you want to see exactly what's happening
+
+## Install
+
+### Requirements
+- macOS 14 (Sonoma) or later
+- [FFmpeg](https://ffmpeg.org), free and installed once:
+
+```bash
+brew install ffmpeg
+```
+
+If FFmpeg isn't installed, the app will offer to set it up for you.
+
+### Build from source
+
+```bash
+git clone https://github.com/ashrinkm/video-audio-converter.git
+cd video-audio-converter
+./build.sh --install
+```
+
+This builds the app and copies it to `/Applications`. Run `./build.sh` without the flag to build into `./build` only.
+
+The first time you open a self-built copy, macOS may ask you to confirm. Right-click the app, choose **Open**, then confirm.
+
+## How it works
+
+The app is written in Swift and SwiftUI. It looks at each file with `ffprobe`, works out the best FFmpeg command for the format and settings you picked, and runs the conversions in the background while tracking their progress. It finds FFmpeg automatically from Homebrew or MacPorts, or you can point it at your own build in **Settings → Engine**.
+
+## Contributing
+
+Bug reports, format requests and pull requests are all welcome. If a file won't convert, please open an issue and include the output of **Copy FFmpeg Command** and the error message. That's usually enough to track it down.
+
+## License
+
+[GPL-3.0](LICENSE). Free to use, share and change, and it has to stay that way.
+
+FFmpeg is a trademark of Fabrice Bellard and is developed by the [FFmpeg project](https://ffmpeg.org). This app is not affiliated with FFmpeg; it builds on their work.
