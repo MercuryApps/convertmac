@@ -78,7 +78,9 @@ Get the latest **[Video-Audio-Converter.dmg](https://github.com/ashrinkm/video-a
 ### Homebrew
 
 ```bash
-brew install --cask ashrinkm/tap/video-audio-converter
+brew tap ashrinkm/tap
+brew trust ashrinkm/tap
+brew install --cask video-audio-converter
 ```
 
 > **First launch:** releases aren't notarized by Apple yet, so macOS will say it can't verify the app. Open it once, then go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway**. You only have to do this once.
