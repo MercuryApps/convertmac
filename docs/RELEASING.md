@@ -19,7 +19,7 @@
 ## Building a release
 
 ```bash
-SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" NOTARY_PROFILE=notary scripts/release.sh 1.1.0
+SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" NOTARY_PROFILE=notary scripts/release.sh 1.2.0
 ```
 
 This compiles a universal FFmpeg (Apple Silicon and Intel) if needed, signs everything with the hardened runtime, builds the DMG, submits it to Apple, staples the notarization ticket, and writes the DMG and the matching FFmpeg source archive to `dist/`. Without `SIGN_IDENTITY` and `NOTARY_PROFILE` it produces an ad-hoc signed DMG instead.
@@ -27,7 +27,7 @@ This compiles a universal FFmpeg (Apple Silicon and Intel) if needed, signs ever
 ## Publishing
 
 ```bash
-gh release create v1.1.0 dist/Video-Audio-Converter-1.1.0.dmg dist/ffmpeg-sources-1.1.0.tar --title "Video & Audio Converter 1.1.0"
+gh release create v1.2.0 dist/ConvertMac-1.2.0.dmg dist/ffmpeg-sources-1.2.0.tar --title "ConvertMac 1.2.0"
 ```
 
-Then update `version` and `sha256` in `Casks/video-audio-converter.rb` in [ashrinkm/homebrew-tap](https://github.com/ashrinkm/homebrew-tap) using the checksum printed by the release script.
+Then update `version` and `sha256` in `Casks/convertmac.rb` in [convertmac/homebrew-tap](https://github.com/convertmac/homebrew-tap) using the checksum printed by the release script.

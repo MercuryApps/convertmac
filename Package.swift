@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "VideoAudioConverter",
+    name: "ConvertMac",
     platforms: [.macOS(.v14)],
     targets: [
-        .executableTarget(name: "VideoAudioConverter", path: "Sources/VideoAudioConverter")
+        .executableTarget(name: "ConvertMac", path: "Sources/ConvertMac")
     ]
 )

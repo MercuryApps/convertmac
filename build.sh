@@ -2,8 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP_NAME="Video & Audio Converter"
-EXE="VideoAudioConverter"
+APP_NAME="ConvertMac"
+EXE="ConvertMac"
 
 swift build -c release --arch arm64 --arch x86_64
 BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/$EXE"

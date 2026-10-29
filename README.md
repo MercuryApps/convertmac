@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/icon.png" width="128" alt="Video & Audio Converter icon">
+  <img src="docs/icon.png" width="128" alt="ConvertMac icon">
 </p>
 
-<h1 align="center">Video &amp; Audio Converter</h1>
+<h1 align="center">ConvertMac</h1>
 
 <p align="center">
   A free, native Mac app for converting video and audio.<br>
@@ -10,12 +10,12 @@
 </p>
 
 <p align="center">
-  <a href="https://video-audio-converter-mu.vercel.app">Website</a> &nbsp;·&nbsp;
-  <a href="https://github.com/ashrinkm/video-audio-converter/releases/latest">Download</a>
+  <a href="https://convertmac.vercel.app">Website</a> &nbsp;·&nbsp;
+  <a href="https://github.com/convertmac/convertmac/releases/latest">Download</a>
 </p>
 
 <p align="center">
-  <img src="docs/screenshot.png" alt="Video & Audio Converter screenshot" width="860">
+  <img src="docs/screenshot.png" alt="ConvertMac screenshot" width="860">
 </p>
 
 ---
@@ -80,7 +80,7 @@ If it saves you time, the best thanks is to star the repo, tell a friend, or fil
 - Keeps subtitles, metadata, chapters and album artwork
 
 **Built for batches**
-- Drag in files or whole folders, or right-click files in Finder and choose **Services → Convert with Video & Audio Converter**
+- Drag in files or whole folders, or right-click files in Finder and choose **Services → Convert with ConvertMac**
 - Several conversions run at once, with hardware acceleration
 - Pause, resume or cancel any file, with live progress, time remaining and speed
 - Keeps your Mac awake while it works, and notifies you when it's done
@@ -93,14 +93,14 @@ Runs on any Mac with macOS 14 Sonoma or newer, Apple Silicon or Intel. Everythin
 
 ### Download
 
-Get the latest **[Video-Audio-Converter.dmg](https://github.com/ashrinkm/video-audio-converter/releases/latest)**, open it, and drag the app into Applications.
+Get the latest **[ConvertMac.dmg](https://github.com/convertmac/convertmac/releases/latest)**, open it, and drag the app into Applications.
 
 ### Homebrew
 
 ```bash
-brew tap ashrinkm/tap
-brew trust ashrinkm/tap
-brew install --cask video-audio-converter
+brew tap convertmac/tap
+brew trust convertmac/tap
+brew install --cask convertmac
 ```
 
 > **First launch:** releases aren't notarized by Apple yet, so macOS will say it can't verify the app. Open it once, then go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway**. You only have to do this once.
@@ -108,8 +108,8 @@ brew install --cask video-audio-converter
 ### Build from source
 
 ```bash
-git clone https://github.com/ashrinkm/video-audio-converter.git
-cd video-audio-converter
+git clone https://github.com/convertmac/convertmac.git
+cd convertmac
 ./build.sh --install
 ```
 

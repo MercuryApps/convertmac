@@ -2,13 +2,13 @@ import AppKit
 import SwiftUI
 
 @main
-struct VideoAudioConverterApp: App {
+struct ConvertMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var queue = QueueManager.shared
     @StateObject private var toolkit = FFmpegToolkit.shared
 
     var body: some Scene {
-        Window("Video & Audio Converter", id: "main") {
+        Window("ConvertMac", id: "main") {
             ContentView()
                 .environmentObject(queue)
                 .environmentObject(toolkit)

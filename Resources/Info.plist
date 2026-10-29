@@ -2,10 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key><string>Video &amp; Audio Converter</string>
-    <key>CFBundleDisplayName</key><string>Video &amp; Audio Converter</string>
-    <key>CFBundleIdentifier</key><string>io.github.ashrinkm.VideoAudioConverter</string>
-    <key>CFBundleExecutable</key><string>VideoAudioConverter</string>
+    <key>CFBundleName</key><string>ConvertMac</string>
+    <key>CFBundleDisplayName</key><string>ConvertMac</string>
+    <key>CFBundleIdentifier</key><string>io.github.convertmac.ConvertMac</string>
+    <key>CFBundleExecutable</key><string>ConvertMac</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>1.0</string>
     <key>CFBundleVersion</key><string>1</string>
@@ -19,10 +19,10 @@
         <dict>
             <key>NSMenuItem</key>
             <dict>
-                <key>default</key><string>Convert with Video &amp; Audio Converter</string>
+                <key>default</key><string>Convert with ConvertMac</string>
             </dict>
             <key>NSMessage</key><string>convertFiles</string>
-            <key>NSPortName</key><string>Video &amp; Audio Converter</string>
+            <key>NSPortName</key><string>ConvertMac</string>
             <key>NSRequiredContext</key><dict/>
             <key>NSSendFileTypes</key>
             <array>

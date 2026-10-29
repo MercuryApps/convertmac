@@ -36,7 +36,7 @@ struct ContentView: View {
             queue.add(urls: urls)
             return !urls.isEmpty
         } isTargeted: { dropTargeted = $0 }
-        .navigationTitle("Video & Audio Converter")
+        .navigationTitle("ConvertMac")
         .navigationSubtitle(subtitle)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
@@ -258,7 +258,7 @@ enum FFmpegInstaller {
           open "https://brew.sh"
           exit 1
         fi
-        brew install ffmpeg && echo "\\nDone! Switch back to Video & Audio Converter and click Check Again."
+        brew install ffmpeg && echo "\\nDone! Switch back to ConvertMac and click Check Again."
         """
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("install-ffmpeg.command")
         do {

@@ -3,8 +3,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 VERSION="${1:?Usage: scripts/release.sh <version>   e.g. scripts/release.sh 1.0.0}"
-APP_NAME="Video & Audio Converter"
-DMG_NAME="Video-Audio-Converter-$VERSION.dmg"
+APP_NAME="ConvertMac"
+DMG_NAME="ConvertMac-$VERSION.dmg"
 SIGN_IDENTITY="${SIGN_IDENTITY:-}"
 NOTARY_PROFILE="${NOTARY_PROFILE:-}"
 
