@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://convertmac.vercel.app">Website</a> &nbsp;·&nbsp;
-  <a href="https://github.com/convertmac/convertmac/releases/latest">Download</a>
+  <a href="https://github.com/MercuryApps/convertmac/releases/latest">Download</a>
 </p>
 
 <p align="center">
@@ -93,13 +93,13 @@ Runs on any Mac with macOS 14 Sonoma or newer, Apple Silicon or Intel. Everythin
 
 ### Download
 
-Get the latest **[ConvertMac.dmg](https://github.com/convertmac/convertmac/releases/latest)**, open it, and drag the app into Applications.
+Get the latest **[ConvertMac.dmg](https://github.com/MercuryApps/convertmac/releases/latest)**, open it, and drag the app into Applications.
 
 ### Homebrew
 
 ```bash
-brew tap convertmac/tap
-brew trust convertmac/tap
+brew tap mercuryapps/tap
+brew trust mercuryapps/tap
 brew install --cask convertmac
 ```
 
@@ -108,7 +108,7 @@ brew install --cask convertmac
 ### Build from source
 
 ```bash
-git clone https://github.com/convertmac/convertmac.git
+git clone https://github.com/MercuryApps/convertmac.git
 cd convertmac
 ./build.sh --install
 ```

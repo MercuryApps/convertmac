@@ -30,4 +30,4 @@ This compiles a universal FFmpeg (Apple Silicon and Intel) if needed, signs ever
 gh release create v1.2.0 dist/ConvertMac-1.2.0.dmg dist/ffmpeg-sources-1.2.0.tar --title "ConvertMac 1.2.0"
 ```
 
-Then update `version` and `sha256` in `Casks/convertmac.rb` in [convertmac/homebrew-tap](https://github.com/convertmac/homebrew-tap) using the checksum printed by the release script.
+Then update `version` and `sha256` in `Casks/convertmac.rb` in [MercuryApps/homebrew-tap](https://github.com/MercuryApps/homebrew-tap) using the checksum printed by the release script.
