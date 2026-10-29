@@ -10,6 +10,11 @@
 </p>
 
 <p align="center">
+  <a href="https://video-audio-converter-mu.vercel.app">Website</a> &nbsp;·&nbsp;
+  <a href="https://github.com/ashrinkm/video-audio-converter/releases/latest">Download</a>
+</p>
+
+<p align="center">
   <img src="docs/screenshot.png" alt="Video & Audio Converter screenshot" width="860">
 </p>
 
