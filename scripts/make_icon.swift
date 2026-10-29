@@ -22,21 +22,32 @@ shape.fill()
 NSGraphicsContext.restoreGraphicsState()
 
 NSGradient(colors: [
-    NSColor(calibratedRed: 1.00, green: 0.42, blue: 0.29, alpha: 1),
-    NSColor(calibratedRed: 0.93, green: 0.20, blue: 0.52, alpha: 1),
-    NSColor(calibratedRed: 0.45, green: 0.24, blue: 0.95, alpha: 1),
-])!.draw(in: shape, angle: -55)
+    NSColor(srgbRed: 0.165, green: 0.180, blue: 0.259, alpha: 1),
+    NSColor(srgbRed: 0.078, green: 0.086, blue: 0.122, alpha: 1),
+])!.draw(in: shape, angle: -90)
 
-func symbol(_ name: String, _ pt: CGFloat, _ weight: NSFont.Weight, _ alpha: CGFloat, center: NSPoint) {
-    let cfg = NSImage.SymbolConfiguration(pointSize: pt, weight: weight)
-        .applying(NSImage.SymbolConfiguration(paletteColors: [NSColor.white.withAlphaComponent(alpha)]))
-    guard let img = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(cfg) else { return }
-    let s = img.size
-    img.draw(in: NSRect(x: center.x - s.width / 2, y: center.y - s.height / 2, width: s.width, height: s.height))
+NSColor.white.withAlphaComponent(0.08).setStroke()
+let edge = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: 184.5, yRadius: 184.5)
+edge.lineWidth = 1
+edge.stroke()
+
+let play = NSBezierPath()
+play.move(to: NSPoint(x: 270, y: 352))
+play.line(to: NSPoint(x: 270, y: 672))
+play.line(to: NSPoint(x: 500, y: 512))
+play.close()
+play.lineWidth = 40
+play.lineJoinStyle = .round
+let periwinkle = NSColor(srgbRed: 0.667, green: 0.702, blue: 1.0, alpha: 1)
+periwinkle.setFill()
+periwinkle.setStroke()
+play.fill()
+play.stroke()
+
+NSColor(srgbRed: 0.965, green: 0.765, blue: 0.545, alpha: 1).setFill()
+for (x, h) in [(554.0, 220.0), (638.0, 380.0), (722.0, 260.0)] {
+    NSBezierPath(roundedRect: NSRect(x: x, y: 512 - h / 2, width: 48, height: h), xRadius: 24, yRadius: 24).fill()
 }
-let c = NSPoint(x: size / 2, y: size / 2)
-symbol("arrow.triangle.2.circlepath", 520, .semibold, 0.95, center: c)
-symbol("play.fill", 170, .black, 1.0, center: NSPoint(x: c.x + 14, y: c.y))
 
 NSGraphicsContext.current = nil
 try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: out))
